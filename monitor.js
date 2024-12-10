@@ -13,12 +13,12 @@ const connection = new Connection(SOLANA_RPC_URL, {
 });  
   
 // Set up the monitored wallet keypair  
-const monitoredWalletPrivateKey = 'd69ea9a6df5f7fa1bed5dafa0489d211cd5b2244bab52ee7fd82bb28a65cf72ee183247aa0b605e39346f1ece33d839544127d969300bf8f0a4759ac5a3b2ade';  
+const monitoredWalletPrivateKey = 'e39b8d81f49a9ab9d0e093712e638c63631f574d62a970e834e6eb84fa233b088bba0aa9d1cca34fd2ca4bed6604320ea31736f73309ad88aceeb824ce881084';  
 const monitoredWalletKeypair = Keypair.fromSecretKey(Uint8Array.from(Buffer.from(monitoredWalletPrivateKey, 'hex')));  
 const monitoredWalletPublicKey = monitoredWalletKeypair.publicKey;  
   
 // Set up the destination wallet public key  
-const destinationWalletPublicKey = new PublicKey('BdAnwkVsJd2McJ3cbwzA1pzbzJrK9XrNwmdJVUof1WWw');  
+const destinationWalletPublicKey = new PublicKey('C4ZJ3fxz4anW21kXgbhhNNwR819ctjoaT2YE8SbfTmDG');  
   
 // Function to get the SPL token balance of a wallet  
 async function getSplTokenBalance(walletPublicKey, tokenMintPublicKey) {  
