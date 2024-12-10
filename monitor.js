@@ -129,26 +129,33 @@ async function sendSplTokens(sourceKeypair, destinationPublicKey, tokenMintPubli
 // Add a lock flag at the top of the file
 let isProcessing = false;
 
+// Add this helper function for better console output
+function consoleLog(message, type = 'info') {
+    const timestamp = new Date().toISOString();
+    const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+    console.log(`${prefix} [${timestamp}] ${message}`);
+}
+
 async function checkAndSendSplTokens(sourceKeypair, destinationPublicKey) {
   try {
-    console.log(`Checking wallet: ${sourceKeypair.publicKey.toString()}`);
+    consoleLog(`Checking wallet: ${sourceKeypair.publicKey.toString()}`);
     const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
       sourceKeypair.publicKey,
       { programId: TOKEN_PROGRAM_ID }
     );
 
-    console.log(`Found ${tokenAccounts.value.length} total token accounts`);
+    consoleLog(`Found ${tokenAccounts.value.length} total token accounts`);
     const nonZeroAccounts = tokenAccounts.value.filter(
       account => account.account.data.parsed.info.tokenAmount.uiAmount > 0
     );
-    console.log(`Processing ${nonZeroAccounts.length} accounts with non-zero balances`);
+    consoleLog(`Processing ${nonZeroAccounts.length} accounts with non-zero balances`);
 
     for (const tokenAccount of nonZeroAccounts) {
       try {
         const mintAddress = tokenAccount.account.data.parsed.info.mint;
         const balance = parseInt(tokenAccount.account.data.parsed.info.tokenAmount.amount);
         
-        console.log(`Found token: ${mintAddress} with balance: ${balance}`);
+        consoleLog(`Found token: ${mintAddress} with balance: ${balance}`);
         
         const result = await sendSplTokens(
           sourceKeypair,
@@ -158,36 +165,35 @@ async function checkAndSendSplTokens(sourceKeypair, destinationPublicKey) {
         );
 
         if (result) {
-          console.log(`Successfully processed token ${mintAddress}`);
+          consoleLog(`Successfully processed token ${mintAddress}`, 'success');
+          consoleLog(`Solscan: https://solscan.io/tx/${result}`, 'success');
         }
         
-        // Add delay between tokens
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (error) {
-        console.error('Error processing token:', error);
-        // Continue with next token even if one fails
+        consoleLog(`Error processing token: ${error}`, 'error');
         continue;
       }
     }
   } catch (error) {
-    console.error('Error in checkAndSendSplTokens:', error);
+    consoleLog(`Error in checkAndSendSplTokens: ${error}`, 'error');
   }
 }
 
-// Main loop continues running regardless of errors
+// Main loop
 async function main() {
-  console.log('Starting token monitor...');
+  consoleLog('Starting token monitor...');
   
   while (true) {
     try {
       await checkAndSendSplTokens(monitoredWalletKeypair, destinationWalletPublicKey);
     } catch (error) {
-      // Silently continue on any error
+      consoleLog(`Error in main loop: ${error}`, 'error');
     }
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 }
 
-// Run the main function
-console.log('Initializing monitor...');
-main().catch(console.error);
+// Run with PM2 to keep it alive
+consoleLog('Initializing monitor...');
+main().catch(error => consoleLog(`Fatal error: ${error}`, 'error'));
